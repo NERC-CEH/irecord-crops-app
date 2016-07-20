@@ -72,6 +72,9 @@ export default Marionette.ItemView.extend({
 
     // Graticule
     //this._initGraticule();
+
+    // Previous records
+    this.addPrevRecords();
   },
 
   _getLayers() {
@@ -151,6 +154,30 @@ export default Marionette.ItemView.extend({
       Satellite: this.layers.Satellite,
     }, {});
     this.map.addControl(this.controls);
+  },
+
+  addPrevRecords() {
+    const that = this;
+    const recordsCollection = this.model.get('recordModel').collection;
+    recordsCollection.each((record) => {
+      if (that.model.get('recordModel').cid === record.cid) return; // skip current record
+
+      const location = record.get('location');
+      if (!location || !location.latitude) return;
+
+      const markerCoords = [location.latitude, location.longitude];
+
+      var latLng = L.latLng(markerCoords);
+      //if (inUK === false) {
+      // point circle
+      const marker = L.circleMarker(latLng, {
+        color: "blue",
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.7,
+      });
+      marker.addTo(that.map);
+    });
   },
 
   _initGraticule() {
@@ -285,7 +312,7 @@ export default Marionette.ItemView.extend({
       // transform location accuracy to map zoom level
       switch (currentLocation.source) {
         case 'map':
-          mapZoomLevel = currentLocation.accuracy + 1 || 1;
+          mapZoomLevel = currentLocation.accuracy || 1;
 
           // transition to OSM/Satellite levels if needed
           if (mapZoomLevel === MAX_OS_ZOOM) {
@@ -390,21 +417,21 @@ export default Marionette.ItemView.extend({
     }
     var latLng = L.latLng(markerCoords);
     //if (inUK === false) {
-      // point circle
-      this.marker = L.circleMarker(latLng || [], {
-        color: "red",
-        weight: 1,
-        opacity: 1,
-        fillOpacity: 0.7,
-      });
-      this.marker.setLocation = function (location) {
-        let markerCoords = [];
-        if (location.latitude && location.longitude) {
-          markerCoords = [location.latitude, location.longitude];
-        }
-        var latLng = L.latLng(markerCoords);
-        return this.setLatLng(latLng);
+    // point circle
+    this.marker = L.circleMarker(latLng || [], {
+      color: "red",
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 0.7,
+    });
+    this.marker.setLocation = function (location) {
+      let markerCoords = [];
+      if (location.latitude && location.longitude) {
+        markerCoords = [location.latitude, location.longitude];
       }
+      var latLng = L.latLng(markerCoords);
+      return this.setLatLng(latLng);
+    }
     //} else {
     //  // GR square
     //  const bounds = this._getSquareBounds(latLng, location) || [[0,0],[0,0]];
