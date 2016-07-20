@@ -1,0 +1,13 @@
+id,warehouse_id,warehouse_dev_id,taxon,common_name
+1,379087,878846,,Barley
+2,379093,878847,,Fallow
+3,379089,878848,,Field bean
+4,379084,878849,,Grass (improved)
+5,379088,878850,,Maize
+6,379091,878851,,Oats
+7,379086,878852,,Oilseed rape
+8,379095,878853,,Other crop
+9,379094,878854,,Peas
+10,379090,878855,,Potatoes
+11,379092,878856,,Sugar/fodder beet
+12,379085,878857,,Wheat
