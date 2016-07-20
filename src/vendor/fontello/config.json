@@ -233,6 +233,12 @@
       "css": "arrows-cw",
       "code": 59429,
       "src": "fontawesome"
+    },
+    {
+      "uid": "8663320a860b00f26e94d3d15c9ba99a",
+      "css": "clock",
+      "code": 59430,
+      "src": "entypo"
     }
   ]
 }

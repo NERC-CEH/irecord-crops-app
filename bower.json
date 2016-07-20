@@ -87,8 +87,9 @@
       "js": ["hammer.js", "hammer.min.js"]
     },
     "leaflet": {
-      "js": ["dist/leaflet.js"],
-      "css": ["dist/leaflet.css"]
+      "js": ["dist/leaflet-src.js", "dist/leaflet.js"],
+      "css": ["dist/leaflet.css"],
+      "images": ["dist/images/layers-2x.png", "dist/images/layers.png"]
     },
     "proj4Leaflet": {
       "js": ["src/proj4leaflet.js"]

@@ -26,7 +26,7 @@ import GridRefView from './grid_ref_view';
 import PastView from './past_view';
 
 const API = {
-  show(recordID) {
+  show(recordID, options = {}) {
     recordManager.get(recordID, (err, recordModel) => {
       // Not found
       if (!recordModel) {
@@ -46,23 +46,23 @@ const API = {
         tabs: [
           {
             id: 'gps',
-            title: 'GPS',
+            title: '<span class="icon icon-location"></span>',
             ContentView: GpsView,
           },
           {
             active: true,
             id: 'map',
-            title: 'Map',
+            title: '<span class="icon icon-map"></span>',
             ContentView: MapView,
           },
           {
             id: 'grid-ref',
-            title: 'Grid Ref',
+            title: 'GR',
             ContentView: GridRefView,
           },
           {
             id: 'past',
-            title: 'Past',
+            title: '<span class="icon icon-clock"></span>',
             ContentView: PastView,
           },
         ],
@@ -77,12 +77,14 @@ const API = {
 
         if (!createNew) {
           // extend old location to preserve its previous attributes like name or id
-          const oldLocation = recordModel.get('location') || {};
+          let oldLocation = recordModel.get('location');
+          if (!_.isObject(oldLocation)) oldLocation = {}; // check for locked true
           location = $.extend(oldLocation, location);
         }
 
         recordModel.set('location', location);
         recordModel.trigger('change:location');
+        onPageExit();
       }
 
       function onGPSClick() {
@@ -95,7 +97,7 @@ const API = {
       }
 
       function onLocationNameChange(view, name) {
-        if (!name) {
+        if (!name || typeof name !== 'string') {
           return;
         }
 
@@ -144,7 +146,11 @@ const API = {
               appModel.setAttrLock(attr, null);
             }
 
-            window.history.back();
+            if (options && options.prevPage === 'taxon') {
+              App.navigate(`records/${recordModel.cid}/edit`, { replace: true });
+            } else {
+              window.history.back();
+            }
           },
           error: (err) => {
             Log(err, 'e');
@@ -155,7 +161,6 @@ const API = {
 
       mainView.on('childview:location:select:past', (view, location) => {
         onLocationSelect(view, location, true);
-        onPageExit();
       });
       mainView.on('childview:location:delete', API.deleteLocation);
       mainView.on('childview:location:edit', API.editLocation);
@@ -206,7 +211,6 @@ const API = {
           location.accuracy = accuracy;
 
           onLocationSelect(view, location);
-          onPageExit();
         } else {
           App.vent.trigger('gridref:form:data:invalid', validationError);
         }

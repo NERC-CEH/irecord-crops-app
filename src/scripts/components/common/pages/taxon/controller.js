@@ -70,7 +70,7 @@ const API = {
 
         const updatedSampleID = sample.id || sample.cid;
         if (!sampleID) {
-          App.trigger('records:edit:location', updatedSampleID, { replace: true });
+          App.trigger('records:edit:location', updatedSampleID, { prevPage: 'taxon', trigger: false, replace: true });
         } else {
           window.history.back();
         }

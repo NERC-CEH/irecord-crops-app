@@ -6,6 +6,6 @@
     </p>
   </li>
   <li>
-    <p class="app-version">v<%- obj.version %> (<%- obj.build %>)</p>
+    <p class="app-version">v<%- obj.version %> (Alpha <%- obj.build %>)</p>
   </li>
 </ul>

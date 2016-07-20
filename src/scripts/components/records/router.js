@@ -48,7 +48,7 @@ App.on('records:edit', (recordID, options) => {
 
 App.on('records:edit:location', (recordID, options) => {
   App.navigate(`records/${recordID}/edit/location`, options);
-  LocationController.show(recordID);
+  LocationController.show(recordID, options);
 });
 
 App.on('records:edit:attr', (recordID, attrID, options) => {
