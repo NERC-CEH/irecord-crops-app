@@ -11,8 +11,6 @@
 
       <% if (obj.location_name) { %>
       <span class="media-object pull-right descript"><%- obj.location_name %></span>
-      <% } else { %>
-      <span class="media-object pull-right descript error">Name missing</span>
       <% } %>
 
       <% if (obj.location) { %>
