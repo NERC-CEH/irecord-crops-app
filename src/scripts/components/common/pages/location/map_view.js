@@ -92,6 +92,12 @@ export default Marionette.ItemView.extend({
     this.addGPSButton(useTracking);
   },
 
+  onDestroy() {
+    if (this.trackingMarker) {
+      this._stopTracking(true);
+    }
+  },
+
   _getLayers() {
     const layers = {};
     layers.Satellite = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
@@ -207,10 +213,11 @@ export default Marionette.ItemView.extend({
       //if (inUK === false) {
       // point circle
       const marker = L.circleMarker(latLng, {
-        color: "blue",
+        color: "#caae47",
+        radius: 7,
         weight: 2,
         opacity: 1,
-        fillOpacity: 0.7,
+        fillOpacity: 0.8,
       });
       marker.addTo(that.map);
     });
@@ -469,7 +476,7 @@ export default Marionette.ItemView.extend({
       color: "red",
       weight: 1,
       opacity: 1,
-      fillOpacity: 0.7,
+      fillOpacity: 0.8,
     });
     this.marker.setLocation = function (location) {
       let markerCoords = [];
@@ -589,9 +596,10 @@ export default Marionette.ItemView.extend({
           //add marker
           that.trackingMarker = L.circleMarker(center, {
             color: "green",
+            radius: 5,
             weight: 1,
             opacity: 1,
-            fillOpacity: 0.7,
+            fillOpacity: 1,
           });
           that.trackingMarker.addTo(that.map);
         } else {
@@ -602,9 +610,12 @@ export default Marionette.ItemView.extend({
     });
   },
 
-  _stopTracking() {
+  _stopTracking(onlyTemporary) {
     Log('Location:MapView: stopped tracking');
-    this.model.get('appModel').set('useMapTracking', false).save();
+
+    if (!onlyTemporary){
+      this.model.get('appModel').set('useMapTracking', false).save();
+    }
 
     this.tracking = GPS.stop(this.tracking);
     if (this.trackingMarker) {

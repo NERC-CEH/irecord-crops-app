@@ -73,7 +73,7 @@ const helpers = {
 
   meters2MapZoom(accuracy) {
     const digits = Math.log(accuracy) / Math.LN10;
-    let mapZoomLevel = digits ? 11 - digits * 2 : 10; // max zoom 10 (digits == 0)
+    let mapZoomLevel = digits ? 20 - digits * 2 : 18; // max zoom 10 (digits == 0)
     mapZoomLevel = Number((mapZoomLevel).toFixed(0)); // round the float
     return mapZoomLevel;
   },
