@@ -477,6 +477,7 @@ export default Marionette.ItemView.extend({
       weight: 1,
       opacity: 1,
       fillOpacity: 0.8,
+      zIndexOffset: 10,
     });
     this.marker.setLocation = function (location) {
       let markerCoords = [];
@@ -600,6 +601,7 @@ export default Marionette.ItemView.extend({
             weight: 1,
             opacity: 1,
             fillOpacity: 1,
+            zIndexOffset: 1000,
           });
           that.trackingMarker.addTo(that.map);
         } else {
@@ -620,6 +622,7 @@ export default Marionette.ItemView.extend({
     this.tracking = GPS.stop(this.tracking);
     if (this.trackingMarker) {
       this.map.removeLayer(this.trackingMarker);
+      delete this.trackingMarker;
     }
   },
 
