@@ -9,7 +9,7 @@ export default {
   build: '{APP_BUILD}', // replaced on build
   name: '{APP_NAME}', // replaced on build
 
-  gps_accuracy_limit: 100,
+  gps_accuracy_limit: 200,
 
   // logging
   log: {

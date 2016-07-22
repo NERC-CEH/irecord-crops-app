@@ -71,6 +71,13 @@ const helpers = {
     return accuracy < 1 ? 1 : accuracy;
   },
 
+  meters2MapZoom(accuracy) {
+    const digits = Math.log(accuracy) / Math.LN10;
+    let mapZoomLevel = digits ? 11 - digits * 2 : 10; // max zoom 10 (digits == 0)
+    mapZoomLevel = Number((mapZoomLevel).toFixed(0)); // round the float
+    return mapZoomLevel;
+  },
+
   /**
    * 1 gridref digits. (10000m)
    * 2 gridref digits. (1000m)

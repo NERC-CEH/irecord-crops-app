@@ -1,9 +1,9 @@
 import $ from 'jquery';
 import Error from './error';
 import Log from './log';
+import CONFIG from 'config';
 
 const API = {
-  GPS_ACCURACY_LIMIT: 100, // meters
   TIMEOUT: 120000,
 
   running: false,
@@ -11,7 +11,7 @@ const API = {
   start(options = {}) {
     const callback = options.callback;
     const onUpdate = options.onUpdate;
-    const accuracyLimit = options.accuracyLimit || API.GPS_ACCURACY_LIMIT;
+    const accuracyLimit = options.accuracyLimit || CONFIG.gps_accuracy_limit;
 
     // Early return if geolocation not supported.
     if (!navigator.geolocation) {

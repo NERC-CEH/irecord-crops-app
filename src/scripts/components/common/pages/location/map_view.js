@@ -9,6 +9,9 @@ import OSLeaflet from '../../../../../vendor/os-leaflet/js/OSOpenSpace';
 import OsGridRef from '../../../../../vendor/latlon/js/osgridref';
 import JST from '../../../../JST';
 import LocHelp from '../../../../helpers/location';
+import Log from '../../../../helpers/log';
+import GPS from '../../../../helpers/gps';
+import LeafletButton from './leaflet_button_ext';
 import CONFIG from 'config'; // Replaced with alias
 
 const DEFAULT_LAYER = 'OS';
@@ -37,6 +40,10 @@ export default Marionette.ItemView.extend({
     this.currentLayerControlSelected = false;
     this.currentLayer = null;
     this.markerAdded = false;
+
+    const recordModel = this.model.get('recordModel');
+    this.listenTo(recordModel, 'change:location', this.updateMarker);
+    this.listenTo(recordModel, 'geolocation:success', this.updateMapView);
   },
 
   onShow() {
@@ -65,7 +72,7 @@ export default Marionette.ItemView.extend({
     this.map.on('zoomend', this.onMapZoom, this);
 
     // Controls
-    this.addControls();
+    this.addLayerControls();
 
     // Marker
     this.addMapMarker();
@@ -75,6 +82,14 @@ export default Marionette.ItemView.extend({
 
     // Previous records
     this.addPrevRecords();
+
+    // Tracking GPS button
+    const useTracking = this.model.get('appModel').get('useMapTracking');
+    if (useTracking) {
+      this._startTracking();
+    }
+
+    this.addGPSButton(useTracking);
   },
 
   _getLayers() {
@@ -147,13 +162,34 @@ export default Marionette.ItemView.extend({
     return center;
   },
 
-  addControls() {
-    this.controls = L.control.layers({
+  addLayerControls() {
+    this.layerControls = L.control.layers({
       OS: this.layers.OS,
       OSM: this.layers.OSM,
       Satellite: this.layers.Satellite,
     }, {});
-    this.map.addControl(this.controls);
+    this.map.addControl(this.layerControls);
+  },
+
+  addGPSButton(active) {
+    const that = this;
+    const GPSbutton = new LeafletButton({
+      body: '<span class="icon icon-location"></span>',
+      'onClick': onToggle,  // callback function
+      'maxWidth': 30,  // number
+      'doToggle': true,  // bool
+      'toggleStatus': active  // bool
+    });
+
+    function onToggle() {
+      if (that.tracking) {
+        that._stopTracking();
+      } else {
+        that._startTracking();
+      }
+    }
+
+    this.map.addControl(GPSbutton);
   },
 
   addPrevRecords() {
@@ -172,7 +208,7 @@ export default Marionette.ItemView.extend({
       // point circle
       const marker = L.circleMarker(latLng, {
         color: "blue",
-        weight: 1,
+        weight: 2,
         opacity: 1,
         fillOpacity: 0.7,
       });
@@ -326,9 +362,7 @@ export default Marionette.ItemView.extend({
           break;
         case 'gps':
           if (currentLocation.accuracy) {
-            const digits = Math.log(currentLocation.accuracy) / Math.LN10;
-            mapZoomLevel = digits ? 11 - digits * 2 : 10; // max zoom 10 (digits == 0)
-            mapZoomLevel = Number((mapZoomLevel).toFixed(0)); // round the float
+            mapZoomLevel = LocHelp.meters2MapZoom(currentLocation.accuracy);
           } else {
             mapZoomLevel = 1;
           }
@@ -344,7 +378,7 @@ export default Marionette.ItemView.extend({
   },
 
   _updateCoordSystem(e) {
-    this.currentLayerControlSelected = this.controls._handlingClick;
+    this.currentLayerControlSelected = this.layerControls._handlingClick;
 
     const center = this.map.getCenter();
     let zoom = this.map.getZoom();
@@ -378,11 +412,23 @@ export default Marionette.ItemView.extend({
       }
     }
 
-    this.currentGraticule;
-
+    //this.currentGraticule;
   },
 
-  updateMarker(location) {
+  updateMapView() {
+    Log('Location:MapView: updating map view zoom&center');
+    const location = this._getCurrentLocation();
+    if (!location || !location.latitude || !location.longitude) return;
+
+    const center = [location.latitude, location.longitude];
+    const zoom = LocHelp.meters2MapZoom(location.accuracy);
+    this.map.setView(center, zoom, { reset: true });
+  },
+
+  updateMarker() {
+    Log('Location:MapView: updating map marker');
+    const location = this._getCurrentLocation();
+
     if (!this.markerAdded) {
       this.marker.setLocation(location);
 
@@ -402,6 +448,7 @@ export default Marionette.ItemView.extend({
   },
 
   addMapMarker() {
+    Log('Location:MapView: adding map marker');
     const that = this;
     const location = this._getCurrentLocation();
     const inUK = LocHelp.isInUK(location);
@@ -489,7 +536,6 @@ export default Marionette.ItemView.extend({
 
     // trigger won't work to bubble up
     this.triggerMethod('location:select:map', location);
-    this.updateMarker(location);
   },
 
   _getSquareBounds(latLng, location) {
@@ -519,6 +565,51 @@ export default Marionette.ItemView.extend({
 
   _getCurrentLocation() {
     return this.model.get('recordModel').get('location') || {};
+  },
+
+  _startTracking() {
+    Log('Location:MapView: started tracking');
+    this.model.get('appModel').set('useMapTracking', true).save();
+
+    const that = this;
+
+    this.tracking = GPS.start({
+      callback(err, location) {
+        if (err) {
+          Log(err, 'e');
+          that.tracking = GPS.stop(that.tracking);
+          return;
+        }
+        Log('found!')
+        console.log(location)
+        const center = [location.latitude, location.longitude];
+        that.map.setView(center, that.map.getZoom());
+
+        if (!that.trackingMarker) {
+          //add marker
+          that.trackingMarker = L.circleMarker(center, {
+            color: "green",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.7,
+          });
+          that.trackingMarker.addTo(that.map);
+        } else {
+          //update marker position
+          that.trackingMarker.setLatLng(center);
+        }
+      }
+    });
+  },
+
+  _stopTracking() {
+    Log('Location:MapView: stopped tracking');
+    this.model.get('appModel').set('useMapTracking', false).save();
+
+    this.tracking = GPS.stop(this.tracking);
+    if (this.trackingMarker) {
+      this.map.removeLayer(this.trackingMarker);
+    }
   },
 
   serializeData() {
